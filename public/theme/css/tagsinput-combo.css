@@ -1,0 +1,39 @@
+.bootstrap-tagsinput{
+    width:100%;
+    height:48px;
+    overflow-y:auto;
+}
+
+.bootstrap-tagsinput {
+    padding: 12px;
+    line-height: 40px;
+    padding-top: 3px;
+}
+
+.bootstrap-tagsinput .label-info {
+    padding: 5px;
+    color: #A0A0A0;
+    border-radius: 4px!important;
+    border: solid 1px #a0a0a0;
+    background-color: white;
+    font-weight: 400;
+}
+
+.bootstrap-tagsinput input{
+
+    display:none;
+
+    margin-top: 12px;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 0px;
+    padding: 4px;
+}
+
+.bootstrap-tagsinput input:focus{
+    border: solid 1px #aab561;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+}

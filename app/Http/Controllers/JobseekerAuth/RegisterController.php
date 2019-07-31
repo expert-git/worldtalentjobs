@@ -1,0 +1,130 @@
+<?php
+
+namespace App\Http\Controllers\JobseekerAuth;
+
+use App\Jobseeker;
+use Validator;
+use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Support\Facades\Auth;
+use App\Workexperience;
+use App\Education;
+use App\personaldetails;
+use Mail;
+use App\Mail\verifyEmail;
+use App\User;
+
+class RegisterController extends Controller
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Register Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles the registration of new users as well as their
+    | validation and creation. By default this controller uses a trait to
+    | provide this functionality without requiring any additional code.
+    |
+    */
+
+    use RegistersUsers;
+
+    /**
+     * Where to redirect users after login / registration.
+     *
+     * @var string
+     */
+    protected $redirectTo = '/jobseeker/sentverifymail';
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('jobseeker.guest');
+    }
+
+    /**
+     * Get a validator for an incoming registration request.
+     *
+     * @param  array  $data
+     * @return \Illuminate\Contracts\Validation\Validator
+     */
+    protected function validator(array $data)
+    {
+        return Validator::make($data, [
+           // 'name' => 'required|max:255',
+            'email' => 'required|email|max:255|unique:jobseekers',
+            'password' => 'required|min:6|confirmed',
+        ]);
+    }
+
+    /**
+     * Create a new user instance after a valid registration.
+     *
+     * @param  array  $data
+     * @return Jobseeker
+     */
+    protected function create(array $data)
+    {
+        $jobseeker= Jobseeker::create([
+          //  'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => bcrypt($data['password']),
+            'verifyToken'=>uniqid()
+        ]);
+
+        $user = User::create();
+        $jobseeker->user()->save($user);
+        // $edu=Education::create(['id'=>$jobseeker->id,'degree'=>"[]",'details'=>"[]"]);
+        // $exp=Workexperience::create(['id'=>$jobseeker->id,'experience'=>"[]"]);
+        
+        $this->SendMail($jobseeker);
+
+        return $jobseeker;
+    }
+
+    protected function SendMail($thiUser)
+    {
+        Mail::to($thiUser['email'])->send(new verifyEmail($thiUser));
+    }
+    
+    public function SendMailDone($email,$verifyToken)
+    {
+        $check = Jobseeker::where('email',$email)->where('verifyToken',$verifyToken)->first();
+        if ($check) {
+            Jobseeker::where('email',$email)->where('verifyToken',$verifyToken)->update(['status'=>1,'verifyToken'=>'']);
+            $person = personaldetails::where('jobseeker_id', $check->id)->get();
+            //var_dump($person);
+            if($person->count() == 0){
+                //var_dump($person);
+                $person = new personaldetails;
+                $person->jobseeker_id = $check->id;
+                $person->save();
+                //var_dump($person);
+            }
+            return view('jobseeker.auth.verifiedmail');
+        }
+    }
+    /**
+     * Show the application registration form.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function showRegistrationForm()
+    {
+        return view('jobseeker.auth.register');
+    }
+
+    /**
+     * Get the guard to be used during registration.
+     *
+     * @return \Illuminate\Contracts\Auth\StatefulGuard
+     */
+    protected function guard()
+    {
+        return Auth::guard('jobseeker');
+    }
+}
